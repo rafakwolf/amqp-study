@@ -1,8 +1,20 @@
-﻿namespace Contracts
+﻿using RabbitMQ.Client;
+
+namespace Contracts
 {
     public class Configs
     {
-        public const string ConnectionString =
-            "host=llama-01.rmq.cloudamqp.com;virtualHost=azzjbuoq;username=azzjbuoq;password=PT8mfKH7i5qcuKPBqQfZ-gGw19u15Arf";
+        public static ConnectionFactory NewConnection()
+        {
+            var factory = new ConnectionFactory
+            {
+                HostName = "llama-01.rmq.cloudamqp.com",
+                VirtualHost = "azzjbuoq",
+                UserName = "azzjbuoq",
+                Password = "PT8mfKH7i5qcuKPBqQfZ-gGw19u15Arf"
+            };
+
+            return factory;
+        }
     }
 }

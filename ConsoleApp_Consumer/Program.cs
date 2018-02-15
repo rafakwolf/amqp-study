@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Text;
 using Contracts;
-using EasyNetQ;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 namespace ConsoleApp_Consumer
 {
@@ -8,16 +10,22 @@ namespace ConsoleApp_Consumer
     {
         static void Main(string[] args)
         {
-            using (var messageBus = RabbitHutch.CreateBus(Configs.ConnectionString))
-            {
-                messageBus.Subscribe<HelloMessage>("my_subscription_id",
-                    hello =>
-                    {
-                        Console.WriteLine(hello.SayHello);
-                    });
-            }
+            var factory = Configs.NewConnection();
 
-            //Console.WriteLine("Aguardando mensagens...");
+            var conn = factory.CreateConnection();
+            var channel = conn.CreateModel();
+
+            var consumer = new EventingBasicConsumer(channel);
+            consumer.Received += (ch, ea) =>
+            {
+                var body = Encoding.Default.GetString(ea.Body);
+                Console.WriteLine(body);
+                channel.BasicAck(ea.DeliveryTag, false);
+            };
+
+            var consumerTag = channel.BasicConsume("my_queue", false, consumer);
+
+            Console.WriteLine("Aguardando mensagens...");
             Console.ReadLine();
         }
     }

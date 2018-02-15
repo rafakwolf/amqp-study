@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Text;
 using Contracts;
-using EasyNetQ;
+using RabbitMQ.Client;
 
 namespace ConsoleApp_Publisher
 {
@@ -8,14 +9,19 @@ namespace ConsoleApp_Publisher
     {
         static void Main(string[] args)
         {
-            using (var messagePublisher = RabbitHutch.CreateBus(Configs.ConnectionString))
-            {
-                var hello = new HelloMessage {SayHello = "Olá mundo!!!"};
+            var factory = Configs.NewConnection();
 
-                messagePublisher.Publish<HelloMessage>(hello);
-            }
+            var conn = factory.CreateConnection();
+            var model = conn.CreateModel();
 
-            //Console.WriteLine("Mensagem publicada!");
+            model.ExchangeDeclare("my_exchange", ExchangeType.Direct);
+            model.QueueDeclare("my_queue", false, false, false, null);
+            model.QueueBind("my_queue", "my_exchange", "my_routing_key", null);
+
+            var message = Encoding.UTF8.GetBytes("Hello world!!!");
+            model.BasicPublish("my_exchange", "my_routing_key",null, message);
+
+            Console.WriteLine("Mensagem publicada!");
             Console.ReadLine();
         }
     }
